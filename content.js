@@ -1,93 +1,110 @@
-// console.clear();
 
-let contentTitle;
+"use strict";
 
-console.log(document.cookie);
-function dynamicClothingSection(ob) {
-  let boxDiv = document.createElement("div");
-  boxDiv.id = "box";
+let contentTitle = [];
 
-  let boxLink = document.createElement("a");
-  // boxLink.href = '#'
-  boxLink.href = "contentDetails.html?" + ob.id;
-  // console.log('link=>' + boxLink);
+function dynamicClothingSection(product) {
+    const boxDiv = document.createElement("div");
+    boxDiv.id = "box";
 
-  let imgTag = document.createElement("img");
-  // imgTag.id = 'image1'
-  // imgTag.id = ob.photos
-  imgTag.src = ob.preview;
+    const boxLink = document.createElement("a");
+    boxLink.href = "contentDetails.html?" + product.id;
 
-  let detailsDiv = document.createElement("div");
-  detailsDiv.id = "details";
+    const imgTag = document.createElement("img");
+    imgTag.src = product.preview;
+    imgTag.alt = product.name || "Product image";
+    imgTag.loading = "lazy";
 
-  let h3 = document.createElement("h3");
-  let h3Text = document.createTextNode(ob.name);
-  h3.appendChild(h3Text);
+    const detailsDiv = document.createElement("div");
+    detailsDiv.id = "details";
 
-  let h4 = document.createElement("h4");
-  let h4Text = document.createTextNode(ob.brand);
-  h4.appendChild(h4Text);
+    const h3 = document.createElement("h3");
+    h3.textContent = product.name || "Product";
 
-  let h2 = document.createElement("h2");
-  let h2Text = document.createTextNode("rs  " + ob.price);
-  h2.appendChild(h2Text);
+    const h4 = document.createElement("h4");
+    h4.textContent = product.brand || "";
 
-  boxDiv.appendChild(boxLink);
-  boxLink.appendChild(imgTag);
-  boxLink.appendChild(detailsDiv);
-  detailsDiv.appendChild(h3);
-  detailsDiv.appendChild(h4);
-  detailsDiv.appendChild(h2);
+    const h2 = document.createElement("h2");
+    h2.textContent = "Rs. " + (product.price ?? "N/A");
 
-  return boxDiv;
+    detailsDiv.appendChild(h3);
+    detailsDiv.appendChild(h4);
+    detailsDiv.appendChild(h2);
+
+    boxLink.appendChild(imgTag);
+    boxLink.appendChild(detailsDiv);
+    boxDiv.appendChild(boxLink);
+
+    return boxDiv;
 }
 
-//  TO SHOW THE RENDERED CODE IN CONSOLE
-// console.log(dynamicClothingSection());
+async function loadProducts() {
+    const containerClothing = document.getElementById("containerClothing");
+    const containerAccessories = document.getElementById("containerAccessories");
 
-// console.log(boxDiv)
-
-let mainContainer = document.getElementById("mainContainer");
-let containerClothing = document.getElementById("containerClothing");
-let containerAccessories = document.getElementById("containerAccessories");
-// mainContainer.appendChild(dynamicClothingSection('hello world!!'))
-
-// BACKEND CALLING
-
-let httpRequest = new XMLHttpRequest();
-
-httpRequest.onreadystatechange = function() {
-  if (this.readyState === 4) {
-    if (this.status == 200) {
-      // console.log('call successful');
-      contentTitle = JSON.parse(this.responseText);
-      if (document.cookie.indexOf(",counter=") >= 0) {
-        var counter = document.cookie.split(",")[1].split("=")[1];
-        document.getElementById("badge").innerHTML = counter;
-      }
-      for (let i = 0; i < contentTitle.length; i++) {
-        if (contentTitle[i].isAccessory) {
-          console.log(contentTitle[i]);
-          containerAccessories.appendChild(
-            dynamicClothingSection(contentTitle[i])
-          );
-        } else {
-          console.log(contentTitle[i]);
-          containerClothing.appendChild(
-            dynamicClothingSection(contentTitle[i])
-          );
-        }
-      }
-    } else {
-      console.log("call failed!");
+    if (!containerClothing || !containerAccessories) {
+        console.error("Product containers are missing from the page.");
+        return;
     }
-  }
-};
-httpRequest.open(
-  "GET",
-  "https://5d76bf96515d1a0014085cf9.mockapi.io/product",
-  true
-);
-httpRequest.send();
 
+    containerClothing.innerHTML = "";
+    containerAccessories.innerHTML = "";
 
+    try {
+        const response = await fetch(
+            "https://5d76bf96515d1a0014085cf9.mockapi.io/product"
+        );
+
+        if (!response.ok) {
+            throw new Error("API request failed. Status: " + response.status);
+        }
+
+        contentTitle = await response.json();
+
+        if (!Array.isArray(contentTitle) || contentTitle.length === 0) {
+            containerClothing.innerHTML = "<p>No clothing products found.</p>";
+            containerAccessories.innerHTML = "<p>No accessories found.</p>";
+            return;
+        }
+
+        contentTitle.forEach(function (product) {
+            if (product.isAccessory) {
+                containerAccessories.appendChild(
+                    dynamicClothingSection(product)
+                );
+            } else {
+                containerClothing.appendChild(
+                    dynamicClothingSection(product)
+                );
+            }
+        });
+
+        // Update cart badge if it exists
+        const badge = document.getElementById("badge");
+
+        if (badge) {
+            const cookieParts = document.cookie.split(",");
+            const counterPart = cookieParts.find(function (part) {
+                return part.trim().startsWith("counter=");
+            });
+
+            if (counterPart) {
+                badge.textContent = counterPart.split("=")[1];
+            }
+        }
+
+        console.log("Products loaded successfully:", contentTitle.length);
+
+    } catch (error) {
+        console.error("Unable to load products:", error);
+
+        containerClothing.innerHTML =
+            "<p>Unable to load clothing products. Please try again later.</p>";
+
+        containerAccessories.innerHTML =
+            "<p>Unable to load accessories. Please try again later.</p>";
+    }
+}
+
+// This function is called after content.html is loaded.
+loadProducts();

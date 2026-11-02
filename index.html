@@ -1,95 +1,151 @@
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <!-- <link rel="stylesheet" href="/style.css"> -->
-    <title> E-COMMERCE WEBSITE BY EDYODA | CREATED BY ABHISHEK GUPTA </title>
-    <!-- favicon -->
-    <link rel="icon" href="https://yt3.ggpht.com/a/AGF-l78km1YyNXmF0r3-0CycCA0HLA_i6zYn_8NZEg=s900-c-k-c0xffffffff-no-rj-mo" type="image/gif" sizes="16x16">
-    <!-- header links -->
-    <script src="https://kit.fontawesome.com/4a3b1f73a2.js"></script>
-    <link href="https://fonts.googleapis.com/css?family=Lato&display=swap" rel="stylesheet">
-    <!-- slider links -->
-    <!-- <script src="http://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script> -->
+
+    <title>E-COMMERCE WEBSITE BY EDYODA | CREATED BY ABHISHEK GUPTA</title>
+
+    <!-- Favicon -->
+    <link
+        rel="icon"
+        href="https://yt3.ggpht.com/a/AGF-l78km1YyNXmF0r3-0CycCA0HLA_i6zYn_8NZEg=s900-c-k-c0xffffffff-no-rj-mo"
+        type="image/gif"
+        sizes="16x16"
+    >
+
+    <!-- Font Awesome -->
+    <script
+        src="https://kit.fontawesome.com/4a3b1f73a2.js"
+        crossorigin="anonymous"
+    ></script>
+
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css?family=Lato&display=swap"
+        rel="stylesheet"
+    >
+
+    <!-- jQuery -->
     <script src="js/jQuery3.4.1.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.9.0/slick.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.9.0/slick-theme.min.css">
+
+    <!-- Slick Slider CSS -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.9.0/slick.min.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.9.0/slick-theme.min.css"
+    >
 </head>
 
 <body>
+
     <!-- HEADER -->
-    <div id="1"></div>
-    <script>
-        load("header.html");
-        function load(url)
-        {
-            req = new XMLHttpRequest();
-            req.open("GET", url, false);
-            req.send(null);
-            document.getElementById(1).innerHTML = req.responseText;
-        }
-    </script>
+    <div id="header"></div>
+
     <!-- SLIDER -->
-    <div id="2"></div>
-    <script>
-        load("slider.html");
-        function load(url)
-        {
-            req = new XMLHttpRequest();
-            req.open("GET", url, false);
-            req.send(null);
-            document.getElementById(2).innerHTML = req.responseText;
-        }
-    </script>
+    <div id="slider"></div>
 
     <!-- CONTENT SECTION -->
-    <div id="3"></div>
-    <script>
-        load("content.html");
-        function load(url)
-        {
-            req = new XMLHttpRequest();
-            req.open("GET", url, false);
-            req.send(null);
-            document.getElementById(3).innerHTML = req.responseText;
-        }
-    </script>
+    <div id="content"></div>
 
     <!-- FOOTER -->
-    <div id="4"></div>
+    <div id="footer"></div>
+
+
+    <!-- Load HTML Components -->
     <script>
-        load("footer.html");
-        function load(url)
-        {
-            req = new XMLHttpRequest();
-            req.open("GET", url, false);
-            req.send(null);
-            document.getElementById(4).innerHTML = req.responseText;
+        async function loadComponent(elementId, filePath) {
+            try {
+                const response = await fetch(filePath);
+
+                if (!response.ok) {
+                    throw new Error(
+                        "Unable to load " + filePath +
+                        ". Status: " + response.status
+                    );
+                }
+
+                const html = await response.text();
+
+                document.getElementById(elementId).innerHTML = html;
+
+            } catch (error) {
+                console.error("Component loading error:", error);
+            }
         }
+
+
+        // Load JavaScript file dynamically
+        function loadScript(filePath) {
+            return new Promise(function (resolve, reject) {
+                const script = document.createElement("script");
+
+                script.src = filePath;
+
+                script.onload = resolve;
+                script.onerror = function () {
+                    reject(new Error("Unable to load script: " + filePath));
+                };
+
+                document.body.appendChild(script);
+            });
+        }
+
+
+        // Load Website Components
+        async function loadWebsite() {
+            try {
+                // Load Header
+                await loadComponent("header", "header.html");
+
+                // Load Slider
+                await loadComponent("slider", "slider.html");
+
+                // Load Content HTML
+                await loadComponent("content", "content.html");
+
+                // Load Content JavaScript AFTER content HTML
+                await loadScript("content.js");
+
+                // Load Footer
+                await loadComponent("footer", "footer.html");
+
+                // Load Slick Slider JS
+                await loadScript(
+                    "https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.9.0/slick.min.js"
+                );
+
+                // Initialize Slick Slider
+                if (
+                    window.jQuery &&
+                    window.jQuery("#containerSlider").length
+                ) {
+                    window.jQuery("#containerSlider").slick({
+                        dots: true,
+                        infinite: true,
+                        slidesToShow: 1,
+                        slidesToScroll: 1,
+                        autoplay: true,
+                        autoplaySpeed: 1500
+                    });
+                }
+
+            } catch (error) {
+                console.error("Website loading error:", error);
+            }
+        }
+
+        // Start Website
+        loadWebsite();
     </script>
 
 </body>
-
-<!-- slider JS START -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.9.0/slick.min.js"></script>
-<script>
-    $(document).ready(function()
-    {
-    $('#containerSlider').slick({
-        dots: true,
-        infinite: true,
-        slidesToShow: 1,
-        slidesToScroll: 1,
-        autoplay: true,
-        autoplaySpeed: 1500,
-        });
-    });
-</script>
-<!-- slider JS ENDS -->
-
-<!-- content JS -->
-<script src="content.js"></script>
 
 </html>
