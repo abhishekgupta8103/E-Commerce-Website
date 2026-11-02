@@ -80,7 +80,7 @@ let buttonTag = document.createElement('button')
 buttonDiv.appendChild(buttonTag)
 
 let buttonLink = document.createElement('a')
-buttonLink.href = '/orderPlaced.html?'
+buttonLink.href = 'orderPlaced.html'
 buttonTag.appendChild(buttonLink)
 
 buttonText = document.createTextNode('Place Order')
@@ -103,10 +103,10 @@ httpRequest.onreadystatechange = function()
             // console.log('call successful');
             contentTitle = JSON.parse(this.responseText)
 
-            let counter = Number(document.cookie.split(',')[1].split('=')[1])
+            let counter = document.cookie.indexOf(',counter=') >= 0 ? Number(document.cookie.split(',')[1].split('=')[1]) : 0;
             document.getElementById("totalItem").innerHTML = ('Total Items: ' + counter)
 
-            let item = document.cookie.split(',')[0].split('=')[1].split(" ")
+            let item = document.cookie.indexOf('orderId=') >= 0 ? document.cookie.split(',')[0].split('=')[1].trim().split(" ") : [];
             console.log(counter)
             console.log(item)
 
