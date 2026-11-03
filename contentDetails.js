@@ -1,147 +1,232 @@
-console.clear()
 
-let id = location.search.split('?')[1] || "1"
-console.log(id)
+"use strict";
 
-if(document.cookie.indexOf(',counter=')>=0)
-{
-    let counter = document.cookie.split(',')[1].split('=')[1]
-    document.getElementById("badge").innerHTML = counter
-}
+console.clear();
 
-function dynamicContentDetails(ob)
-{
-    let mainContainer = document.createElement('div')
-    mainContainer.id = 'containerD'
-    document.getElementById('containerProduct').appendChild(mainContainer);
+// Get product ID from URL
+const productId = new URLSearchParams(window.location.search).keys().next().value || "1";
 
-    let imageSectionDiv = document.createElement('div')
-    imageSectionDiv.id = 'imageSection'
+// Get HTML elements
+const containerProduct = document.getElementById("containerProduct");
+const badge = document.getElementById("badge");
 
-    let imgTag = document.createElement('img')
-     imgTag.id = 'imgDetails'
-     //imgTag.id = ob.photos
-     imgTag.src = ob.preview
+// Read cart information from cookie
+function getCartData() {
+    const cookie = document.cookie
+        .split("; ")
+        .find((item) => item.startsWith("orderId="));
 
-    imageSectionDiv.appendChild(imgTag)
-
-    let productDetailsDiv = document.createElement('div')
-    productDetailsDiv.id = 'productDetails'
-
-    // console.log(productDetailsDiv);
-
-    let h1 = document.createElement('h1')
-    let h1Text = document.createTextNode(ob.name)
-    h1.appendChild(h1Text)
-
-    let h4 = document.createElement('h4')
-    let h4Text = document.createTextNode(ob.brand)
-    h4.appendChild(h4Text)
-    console.log(h4);
-
-    let detailsDiv = document.createElement('div')
-    detailsDiv.id = 'details'
-
-    let h3DetailsDiv = document.createElement('h3')
-    let h3DetailsText = document.createTextNode('Rs ' + ob.price)
-    h3DetailsDiv.appendChild(h3DetailsText)
-
-    let h3 = document.createElement('h3')
-    let h3Text = document.createTextNode('Description')
-    h3.appendChild(h3Text)
-
-    let para = document.createElement('p')
-    let paraText = document.createTextNode(ob.description)
-    para.appendChild(paraText)
-
-    let productPreviewDiv = document.createElement('div')
-    productPreviewDiv.id = 'productPreview'
-
-    let h3ProductPreviewDiv = document.createElement('h3')
-    let h3ProductPreviewText = document.createTextNode('Product Preview')
-    h3ProductPreviewDiv.appendChild(h3ProductPreviewText)
-    productPreviewDiv.appendChild(h3ProductPreviewDiv)
-
-    let i;
-    for(i=0; i<ob.photos.length; i++)
-    {
-        let imgTagProductPreviewDiv = document.createElement('img')
-        imgTagProductPreviewDiv.id = 'previewImg'
-        imgTagProductPreviewDiv.src = ob.photos[i]
-        imgTagProductPreviewDiv.onclick = function(event)
-        {
-            console.log("clicked" + this.src)
-            imgTag.src = ob.photos[i]
-            document.getElementById("imgDetails").src = this.src 
-            
-        }
-        productPreviewDiv.appendChild(imgTagProductPreviewDiv)
+    if (!cookie) {
+        return {
+            orderIds: [],
+            counter: 0
+        };
     }
 
-    let buttonDiv = document.createElement('div')
-    buttonDiv.id = 'button'
+    const cookieValue = cookie.substring("orderId=".length);
+    const parts = cookieValue.split(",");
 
-    let buttonTag = document.createElement('button')
-    buttonDiv.appendChild(buttonTag)
+    const orderIds = parts[0]
+        .split("=")
+        .slice(1)
+        .join("=")
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
 
-    buttonText = document.createTextNode('Add to Cart')
-    buttonTag.onclick  =   function()
-    {
-        let order = id+" "
-        let counter = 1
-        if(document.cookie.indexOf(',counter=')>=0)
-        {
-            order = id + " " + document.cookie.split(',')[0].split('=')[1]
-            counter = Number(document.cookie.split(',')[1].split('=')[1]) + 1
-        }
-        document.cookie = "orderId=" + order + ",counter=" + counter
-        document.getElementById("badge").innerHTML = counter
-        console.log(document.cookie)
-    }
-    buttonTag.appendChild(buttonText)
+    const counterPart = parts.find((part) =>
+        part.trim().startsWith("counter=")
+    );
 
+    const counter = counterPart
+        ? Number(counterPart.split("=")[1]) || 0
+        : orderIds.length;
 
-    console.log(mainContainer.appendChild(imageSectionDiv));
-    mainContainer.appendChild(imageSectionDiv)
-    mainContainer.appendChild(productDetailsDiv)
-    productDetailsDiv.appendChild(h1)
-    productDetailsDiv.appendChild(h4)
-    productDetailsDiv.appendChild(detailsDiv)
-    detailsDiv.appendChild(h3DetailsDiv)
-    detailsDiv.appendChild(h3)
-    detailsDiv.appendChild(para)
-    productDetailsDiv.appendChild(productPreviewDiv)
-    
-    
-    productDetailsDiv.appendChild(buttonDiv)
-
-
-    return mainContainer
+    return {
+        orderIds,
+        counter
+    };
 }
 
+// Save cart information in cookie
+function saveCartData(orderIds) {
+    const counter = orderIds.length;
 
+    document.cookie =
+        `orderId=${orderIds.join(" ")},counter=${counter}; path=/; SameSite=Lax`;
 
-// BACKEND CALLING
-
-let httpRequest = new XMLHttpRequest()
-{
-    httpRequest.onreadystatechange = function()
-    {
-        if(this.readyState === 4 && this.status == 200)
-        {
-            console.log('connected!!');
-            let contentDetails = JSON.parse(this.responseText)
-            {
-                console.log(contentDetails);
-                dynamicContentDetails(contentDetails)
-            }
-        }
-        else
-        {
-            console.log('not connected!');
-        }
+    if (badge) {
+        badge.textContent = counter;
     }
 }
 
-httpRequest.open('GET', 'https://5d76bf96515d1a0014085cf9.mockapi.io/product/'+id, true)
-httpRequest.send()  
+// Update cart badge
+function updateCartBadge() {
+    const cartData = getCartData();
+
+    if (badge) {
+        badge.textContent = cartData.counter;
+    }
+}
+
+// Add product to cart
+function addToCart(id) {
+    const cartData = getCartData();
+
+    // Add product ID to cart
+    cartData.orderIds.push(String(id));
+
+    // Save updated cart
+    saveCartData(cartData.orderIds);
+
+    console.log("Product added to cart:", id);
+    console.log("Updated cart:", cartData.orderIds);
+
+    alert("Product added to cart!");
+}
+
+// Display product details
+function dynamicContentDetails(product) {
+    if (!containerProduct) {
+        console.error("containerProduct element not found.");
+        return;
+    }
+
+    // Clear previous product details
+    containerProduct.innerHTML = "";
+
+    // Main container
+    const mainContainer = document.createElement("div");
+    mainContainer.id = "containerD";
+
+    // Product image section
+    const imageSectionDiv = document.createElement("div");
+    imageSectionDiv.id = "imageSection";
+
+    const imgTag = document.createElement("img");
+    imgTag.id = "imgDetails";
+    imgTag.src = product.preview;
+    imgTag.alt = product.name || "Product image";
+
+    imageSectionDiv.appendChild(imgTag);
+
+    // Product details section
+    const productDetailsDiv = document.createElement("div");
+    productDetailsDiv.id = "productDetails";
+
+    // Product name
+    const h1 = document.createElement("h1");
+    h1.textContent = product.name || "Product";
+
+    // Product brand
+    const h4 = document.createElement("h4");
+    h4.textContent = product.brand || "";
+
+    // Product description and price section
+    const detailsDiv = document.createElement("div");
+    detailsDiv.id = "details";
+
+    // Product price
+    const priceHeading = document.createElement("h3");
+    priceHeading.textContent = `Rs ${product.price}`;
+
+    // Description heading
+    const descriptionHeading = document.createElement("h3");
+    descriptionHeading.textContent = "Description";
+
+    // Description text
+    const descriptionParagraph = document.createElement("p");
+    descriptionParagraph.textContent = product.description || "";
+
+    detailsDiv.appendChild(priceHeading);
+    detailsDiv.appendChild(descriptionHeading);
+    detailsDiv.appendChild(descriptionParagraph);
+
+    // Product preview section
+    const productPreviewDiv = document.createElement("div");
+    productPreviewDiv.id = "productPreview";
+
+    const previewHeading = document.createElement("h3");
+    previewHeading.textContent = "Product Preview";
+
+    productPreviewDiv.appendChild(previewHeading);
+
+    // Product preview images
+    if (Array.isArray(product.photos)) {
+        product.photos.forEach((photo) => {
+            const previewImage = document.createElement("img");
+
+            previewImage.className = "previewImg";
+            previewImage.src = photo;
+            previewImage.alt = "Product preview";
+            previewImage.style.cursor = "pointer";
+
+            // Change main image on preview click
+            previewImage.addEventListener("click", function () {
+                imgTag.src = photo;
+            });
+
+            productPreviewDiv.appendChild(previewImage);
+        });
+    }
+
+    // Add to Cart button section
+    const buttonDiv = document.createElement("div");
+    buttonDiv.id = "button";
+
+    const buttonTag = document.createElement("button");
+    buttonTag.type = "button";
+    buttonTag.textContent = "Add to Cart";
+
+    // Add product to cart when clicked
+    buttonTag.addEventListener("click", function () {
+        addToCart(product.id);
+    });
+
+    buttonDiv.appendChild(buttonTag);
+
+    // Append all sections
+    productDetailsDiv.appendChild(h1);
+    productDetailsDiv.appendChild(h4);
+    productDetailsDiv.appendChild(detailsDiv);
+    productDetailsDiv.appendChild(productPreviewDiv);
+    productDetailsDiv.appendChild(buttonDiv);
+
+    mainContainer.appendChild(imageSectionDiv);
+    mainContainer.appendChild(productDetailsDiv);
+
+    containerProduct.appendChild(mainContainer);
+}
+
+// Fetch product details from API
+async function fetchProductDetails() {
+    try {
+        const response = await fetch(
+            `https://5d76bf96515d1a0014085cf9.mockapi.io/product/${productId}`
+        );
+
+        if (!response.ok) {
+            throw new Error(`API Error: ${response.status}`);
+        }
+
+        const product = await response.json();
+
+        console.log("Product loaded:", product);
+
+        dynamicContentDetails(product);
+
+    } catch (error) {
+        console.error("Unable to load product details:", error);
+
+        if (containerProduct) {
+            containerProduct.textContent =
+                "Unable to load product details. Please try again later.";
+        }
+    }
+}
+
+// Run when page loads
+document.addEventListener("DOMContentLoaded", function () {
+    updateCartBadge();
+    fetchProductDetails();
+});

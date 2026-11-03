@@ -65,4 +65,4 @@ A mobile-responsive sample of an E-Commerce Website built with **HTML5, CSS3, Ja
 
 ---
 
-**&copy; Abhishek Gupta | EDYODA**
+**&copy; Abhishek Gupta |
